@@ -1,4 +1,4 @@
-package com.bank.account.domain.account;
+package com.bank.account.domain;
 
 import com.bank.common.identity.AccountId;
 

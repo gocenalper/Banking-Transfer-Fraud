@@ -1,4 +1,4 @@
-package com.bank.account.domain.account;
+package com.bank.account.domain;
 
 import com.bank.common.identity.TransferId;
 import com.bank.common.money.Money;

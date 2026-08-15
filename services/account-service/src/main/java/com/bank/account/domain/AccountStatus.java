@@ -1,4 +1,4 @@
-package com.bank.account.domain.account;
+package com.bank.account.domain;
 
 public enum AccountStatus {
 

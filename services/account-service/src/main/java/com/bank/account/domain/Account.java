@@ -1,10 +1,9 @@
-package com.bank.account.domain.account;
+package com.bank.account.domain;
 
 import com.bank.common.identity.AccountId;
 import com.bank.common.identity.TransferId;
 import com.bank.common.money.Money;
 
-import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
