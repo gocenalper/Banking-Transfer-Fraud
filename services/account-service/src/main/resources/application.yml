@@ -1,0 +1,31 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: account-service
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/account_db # database-per-service: no other service may touch it
+    username: bank
+    password: bank
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway owns the schema; Hibernate only verifies it matches
+    open-in-view: false
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: localhost:9092
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

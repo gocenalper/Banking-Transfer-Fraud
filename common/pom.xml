@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.bank</groupId>
+        <artifactId>bank-transfer-platform</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>common</artifactId>
+    <name>common</name>
+    <description>
+        Contracts shared across services: money and identifier value objects, event schemas.
+        Caution: a shared library is a source of coupling in a microservice system — no business
+        logic, entities, repositories or Spring dependencies belong here.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.jqwik</groupId>
+            <artifactId>jqwik</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

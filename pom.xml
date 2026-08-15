@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.bank</groupId>
+    <artifactId>bank-transfer-platform</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>bank-transfer-platform</name>
+    <description>Money transfer platform — microservices in a monorepo, hexagonal architecture per service</description>
+
+    <modules>
+        <module>common</module>
+        <module>services/account-service</module>
+        <module>services/ledger-service</module>
+        <module>services/transfer-service</module>
+        <module>services/notification-service</module>
+    </modules>
+
+    <properties>
+        <java.version>25</java.version>
+        <!-- 2.x required: Docker 29 demands API 1.44 minimum, the 1.x client still sends 1.32 -->
+        <testcontainers.version>2.0.2</testcontainers.version>
+        <archunit.version>1.4.1</archunit.version>
+        <jqwik.version>1.9.3</jqwik.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.bank</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.jqwik</groupId>
+                <artifactId>jqwik</artifactId>
+                <version>${jqwik.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
