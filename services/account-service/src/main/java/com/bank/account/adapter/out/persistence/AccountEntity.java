@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,18 +44,23 @@ public class AccountEntity {
     @Column(nullable = false, length = 16)
     private String status;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "account_hold", joinColumns = @JoinColumn(name = "account_id"))
     private List<HoldEmbeddable> holds;
 
     public AccountEntity(UUID id, String ownerName, String currency, BigDecimal balance, String status,
-                         List<HoldEmbeddable> holds) {
+                         List<HoldEmbeddable> holds,  Long version) {
         this.id = id;
         this.ownerName = ownerName;
         this.currency = currency;
         this.balance = balance;
         this.status = status;
         this.holds = holds;
+        this.version = version;
     }
 
 }

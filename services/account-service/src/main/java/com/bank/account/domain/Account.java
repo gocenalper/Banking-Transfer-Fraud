@@ -22,16 +22,19 @@ public class Account {
     private final Currency currency;
     private Money balance;
     private AccountStatus status;
+    private Long version;
     private final Map<TransferId, Hold> holds;
 
     private Account(AccountId accountId, String ownerName, Currency currency,
-                    Money balance, AccountStatus status, Map<TransferId, Hold> holds) {
+                    Money balance, AccountStatus status, Map<TransferId, Hold> holds, Long version) {
         this.accountId = Objects.requireNonNull(accountId, "accountId");
         this.ownerName = Objects.requireNonNull(ownerName, "ownerName");
         this.currency = Objects.requireNonNull(currency, "currency");
         this.balance = Objects.requireNonNull(balance, "balance");
         this.status = Objects.requireNonNull(status, "status");
         this.holds = Objects.requireNonNull(holds, "holds");
+        this.version = version; // null = never persisted; owned and incremented by the persistence layer
+
         if (ownerName.isBlank()) {
             throw new IllegalArgumentException("ownerName must not be blank");
         }
@@ -39,14 +42,15 @@ public class Account {
 
     /** The only way to bring a new account into existence — born OPEN with a zero balance. */
     public static Account open(AccountId accountId, String ownerName, Currency currency) {
-        return new Account(accountId, ownerName, currency, Money.zero(currency), AccountStatus.OPEN, new HashMap<>());
+        return new Account(accountId, ownerName, currency, Money.zero(currency),
+                AccountStatus.OPEN, new HashMap<>(), null);
     }
 
     /** Rebuilds an account from persisted state. For the persistence adapter only. */
     public static Account restore(AccountId accountId, String ownerName, Currency currency,
-                                  Money balance, AccountStatus status, Map<TransferId, Hold> holds) {
+                                  Money balance, AccountStatus status, Map<TransferId, Hold> holds, Long version) {
 
-        return new Account(accountId, ownerName, currency, balance, status, holds);
+        return new Account(accountId, ownerName, currency, balance, status, holds, version);
     }
 
     public Money availableBalance() {
@@ -144,6 +148,10 @@ public class Account {
 
     public Currency currency() {
         return currency;
+    }
+
+    public Long version() {
+        return version;
     }
 
     public Money balance() {

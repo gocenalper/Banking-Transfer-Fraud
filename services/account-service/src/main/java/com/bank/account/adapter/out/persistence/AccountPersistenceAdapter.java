@@ -50,7 +50,8 @@ class AccountPersistenceAdapter implements AccountRepository {
                 currency,
                 new Money(entity.getBalance(), currency),
                 AccountStatus.valueOf(entity.getStatus()),
-                holds);
+                holds,
+                entity.getVersion());
     }
 
     private AccountEntity toEntity(Account account) {
@@ -63,6 +64,7 @@ class AccountPersistenceAdapter implements AccountRepository {
                 account.currency().getCurrencyCode(),
                 account.balance().amount(),
                 account.status().name(),
-                holds);
+                holds,
+                account.version());
     }
 }
