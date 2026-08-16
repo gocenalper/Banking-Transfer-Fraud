@@ -6,6 +6,7 @@ import com.bank.common.money.Money;
 
 import java.util.Currency;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,6 +40,13 @@ public class Account {
     /** The only way to bring a new account into existence — born OPEN with a zero balance. */
     public static Account open(AccountId accountId, String ownerName, Currency currency) {
         return new Account(accountId, ownerName, currency, Money.zero(currency), AccountStatus.OPEN, new HashMap<>());
+    }
+
+    /** Rebuilds an account from persisted state. For the persistence adapter only. */
+    public static Account restore(AccountId accountId, String ownerName, Currency currency,
+                                  Money balance, AccountStatus status, Map<TransferId, Hold> holds) {
+
+        return new Account(accountId, ownerName, currency, balance, status, holds);
     }
 
     public Money availableBalance() {
@@ -119,6 +127,11 @@ public class Account {
         if (!amount.isPositive()) {
             throw new IllegalArgumentException("Amount must be positive, was " + amount);
         }
+    }
+
+    /** Read-only snapshot for the persistence adapter; nobody can mutate holds through this. */
+    public List<Hold> activeHolds() {
+        return List.copyOf(holds.values());
     }
 
     public AccountId accountId() {
