@@ -31,11 +31,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Proves optimistic locking closes the lost-update hole: two threads race the withdraw
- * use case over one account, each in its own transaction. Before @Version this reliably
- * lost money (success=2, 60.00 created out of thin air). Now the stale writer's UPDATE
- * matches zero rows and fails with an optimistic-lock conflict — money can no longer
- * vanish, whatever the interleaving.
+ * End-to-end proof of the full concurrency stack: two threads race the withdraw use case
+ * over one account. History of this test:
+ *  1. Before @Version it reliably lost money (success=2, 60.00 created out of thin air).
+ *  2. With @Version the stale writer surfaced an optimistic-lock conflict.
+ *  3. With the retry decorator (@Primary) the conflict is absorbed inside the
+ *     application: the loser retries on fresh data and gets the honest business answer —
+ *     insufficient balance. Callers see business outcomes, never locking mechanics.
  *
  * NO @Transactional on this test: each use case call must open its own transaction,
  * exactly as two concurrent HTTP requests would.
@@ -69,9 +71,8 @@ class AccountConcurrencyIT {
     }
 
     @Test
-    void concurrentWithdrawalsNeverLoseMoney() throws InterruptedException {
+    void concurrentWithdrawalsNeverLoseMoneyAndConflictsStayInternal() throws InterruptedException {
         int rounds = 10;
-        int conflictTotal = 0;
 
         for (int round = 1; round <= rounds; round++) {
             RoundResult result = runOneRound();
@@ -86,15 +87,13 @@ class AccountConcurrencyIT {
                     .isEqualByComparingTo("100.00");
             // 100 can only fund one 60.00 withdrawal, whatever the timing.
             assertThat(result.successes()).as("exactly one withdrawal wins").isEqualTo(1);
-
-            conflictTotal += result.conflicts();
+            // The loser always ends with the honest business answer...
+            assertThat(result.rejections()).as("loser is politely refused").isEqualTo(1);
+            // ...because the retry decorator absorbs version conflicts internally.
+            assertThat(result.conflicts())
+                    .as("locking mechanics never leak to the caller")
+                    .isZero();
         }
-
-        // Prove the mechanism actually fired: at least one round must have produced a
-        // version conflict (not just polite sequencing where the loser read fresh data).
-        assertThat(conflictTotal)
-                .as("optimistic locking observed rejecting at least one stale write")
-                .isPositive();
     }
 
     private record RoundResult(int successes, int rejections, int conflicts,
