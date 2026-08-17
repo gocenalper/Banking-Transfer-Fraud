@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: Account Service API
+  description: >
+    Account lifecycle, balances and money movements. This file is the CONTRACT:
+    server interfaces and models are generated from it at build time, so the
+    implementation cannot drift from what is documented here.
+  version: "1.0"
+tags:
+  - name: Accounts
+    description: Account lifecycle, balances and money movements
+
+paths:
+  /api/accounts:
+    post:
+      tags: [Accounts]
+      operationId: openAccount
+      summary: Open a new account
+      description: Creates an OPEN account with a zero balance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAccountRequest'
+      responses:
+        '201':
+          description: Account created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the new account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/accounts/{id}:
+    get:
+      tags: [Accounts]
+      operationId: getAccount
+      summary: Get an account by id
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: The account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/accounts/{id}/deposits:
+    post:
+      tags: [Accounts]
+      operationId: deposit
+      summary: Deposit money
+      description: Amount must be positive and match the account currency
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoneyRequest'
+      responses:
+        '200':
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/accounts/{id}/withdrawals:
+    post:
+      tags: [Accounts]
+      operationId: withdraw
+      summary: Withdraw money
+      description: Fails with 409 when the available balance is insufficient
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoneyRequest'
+      responses:
+        '200':
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+components:
+  parameters:
+    AccountIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Account identifier
+
+  schemas:
+    OpenAccountRequest:
+      type: object
+      required: [ownerName, currency]
+      properties:
+        ownerName:
+          type: string
+          minLength: 1
+          example: Alice
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: TRY
+
+    MoneyRequest:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: string
+          description: Decimal amount as a string to avoid floating-point loss
+          example: "100.00"
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: TRY
+
+    AccountResponse:
+      type: object
+      required: [id, ownerName, currency, status, balance, availableBalance]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerName:
+          type: string
+          example: Alice
+        currency:
+          type: string
+          example: TRY
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        balance:
+          type: string
+          example: "100.00"
+        availableBalance:
+          type: string
+          description: balance minus active holds
+          example: "70.00"
+
+    ProblemDetail:
+      type: object
+      description: RFC 9457 problem details
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+
+  responses:
+    BadRequest:
+      description: The request itself is malformed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: Account does not exist
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Conflict:
+      description: The request is valid but clashes with the current state
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
