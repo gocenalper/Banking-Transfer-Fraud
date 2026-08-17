@@ -91,8 +91,6 @@ ArchUnit tests fail the build on any violation, per service.
 |---|---|---|
 | [0001](docs/adr/0001-microservices-monorepo.md) | **Microservices from day one, in a monorepo** | The goal is learning distributed-systems muscles: sagas, partial failure, eventual consistency. Database-per-service; `common` carries contracts only. |
 | [0002](docs/adr/0002-ledger-source-of-truth.md) | **Ledger is the source of truth; balance is a projection** | Booked money history lives in the ledger; available balance lives in account-service via a reservation model (hold → capture/release). Reconciliation is mandatory, not optional. |
-| 0003 *(pending)* | **AWS: ephemeral EKS on Free-Plan credits** | Terraform-managed cluster born and destroyed per session (~$2/session); stateful services run in-cluster (StatefulSet + EBS); NAT-free VPC; OIDC-federated CI. |
-| 0004 *(upcoming)* | **Optimistic locking + bounded retry** | READ COMMITTED + `@Version`; conflict metrics decide if any hot flow ever earns pessimistic `FOR UPDATE`. |
 
 ## 🔬 Highlights so far
 

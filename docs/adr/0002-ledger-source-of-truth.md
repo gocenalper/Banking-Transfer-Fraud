@@ -1,32 +1,35 @@
-# ADR 0002 — Ledger source of truth; bakiye türetilmiş projection; rezervasyon modeli
+# ADR 0002 — Ledger as source of truth; balance as projection; reservation model
 
-**Tarih:** 2026-08-14 · **Durum:** Kabul edildi
+**Date:** 2026-08-14 · **Status:** Accepted
 
-## Bağlam
-Mikroservis kararından (ADR 0001) sonra ledger (`ledger_db`) ile hesap bakiyesi
-(`account_db`) farklı servislerde ve farklı veritabanlarında yaşıyor. "Paranın gerçeği
-nerede?" sorusu netleşmeliydi. Değerlendirilen seçenekler: (A) bakiye gerçek + ledger
-audit log, (B) ledger gerçek + bakiye projection, (C) tam event sourcing.
+## Context
+After ADR-0001 the ledger (`ledger_db`) and the account balance (`account_db`) live in
+different services and different databases. "Where does the truth about money live?"
+had to be settled. Options considered: (A) balance is the truth and the ledger is an
+audit log, (B) ledger is the truth and balance is a projection, (C) full event sourcing.
 
-## Karar: B + rezervasyon modeli
-- **Gerçekleşmiş para hareketinin tarihsel gerçeği ledger'dır:** append-only çift kayıt
-  (debit −, credit +, transfer başına toplam sıfır). Kayıt güncellenmez/silinmez;
-  düzeltme ters kayıtla yapılır.
-- **`account.balance` türetilmiş bir projection'dır:** hızlı okuma ve yetersiz bakiye
-  kontrolü için tutulur; bozulursa ledger'dan yeniden inşa edilebilir.
-- **Anlık "kullanılabilir bakiye" yetkilisi account-service'tir (rezervasyon modeli):**
-  transfer başlarken account-service kendi DB'sinde atomik olarak available balance'tan
-  düşüp bir hold yaratır; saga tamamlanınca hold ya ledger kaydına dönüşür ya iptal edilir.
-  Yani soru başına bir source of truth: available → account, booked → ledger.
-- **Reconciliation zorunludur:** `account.balance` ↔ ledger SUM'ını periyodik karşılaştırıp
-  sapma raporlayan bir süreç (iki DB eventual consistent olduğu için opsiyonel değil).
+## Decision: B plus a reservation model
+- **The historical truth of booked money movements is the ledger**: append-only
+  double-entry records (debit −, credit +, each transfer sums to zero). Entries are
+  never updated or deleted; corrections are compensating entries.
+- **`account.balance` is a derived projection** kept for fast reads and
+  insufficient-funds checks; if it is ever corrupted it can be rebuilt from the ledger.
+- **The authority on the instantaneous available balance is account-service**
+  (reservation model): starting a transfer atomically reduces the available balance by
+  creating a hold in its own database; when the saga completes, the hold is either
+  captured into a ledger entry or released. One source of truth **per question**:
+  available → account, booked → ledger.
+- **Reconciliation is mandatory**: a periodic process compares `account.balance`
+  against the ledger sum and reports drift — the two databases are only eventually
+  consistent, so this is not optional.
 
-## Reddedilenler
-- **A:** ledger'a yazılamayan hareket = kayıp denetim izi; bankacılıkta kabul edilemez.
-- **C:** event versiyonlama/snapshot/replay yükü, saga + MLOps öğrenme hedefleriyle
-  yarışır; ledger zaten append-only gerçek + türetilmiş görünüm fikrini öğretiyor.
+## Rejected
+- **A:** a movement that fails to reach the ledger would be a lost audit trail —
+  unacceptable in banking.
+- **C:** event versioning, snapshots and replay infrastructure would compete with the
+  saga and MLOps learning goals; the ledger already teaches the core idea of an
+  append-only truth plus derived views.
 
-## Açık konular (ileride tartışılacak)
-- Hold'lar ledger'a da yazılmalı mı (available vs booked balance ayrımının modellenmesi)?
-- Reconciliation sapma bulunca otomatik düzeltme mi, alarm + insan kararı mı?
-- account-service içinde sınırlı bir event sourcing denemesi yapılacak mı?
+## Open questions (to revisit)
+- Should holds also be recorded in the ledger (modelling available vs booked balance)?
+- When reconciliation finds drift: automatic repair or alert plus human decision?
